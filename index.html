@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AE Player - Sincronizar Lista</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: "Helvetica Neue", Arial, sans-serif;
+      background: #08090d;
+      color: #f8fafc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      background: #121520;
+      border: 2px solid #24293e;
+      border-radius: 16px;
+      padding: 40px;
+      width: 100%;
+      max-width: 500px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 32px;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, #9d4edd 0%, #ec4899 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: 800;
+    }
+
+    p.subtitle {
+      text-align: center;
+      color: #94a3b8;
+      margin-bottom: 32px;
+      font-size: 16px;
+    }
+
+    .form-group {
+      margin-bottom: 24px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+      color: #cbd5e1;
+      font-weight: 600;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px 16px;
+      background: #08090d;
+      border: 2px solid #24293e;
+      border-radius: 10px;
+      color: #fff;
+      font-size: 16px;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    input:focus {
+      border-color: #ec4899;
+      box-shadow: 0 0 10px rgba(236, 72, 153, 0.2);
+    }
+
+    button {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #7c3aed 0%, #ec4899 100%);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(236, 72, 153, 0.4);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    #status-message {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 600;
+      min-height: 20px;
+    }
+    
+    .success { color: #10b981; }
+    .error { color: #f43f5e; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>AE Player</h1>
+    <p class="subtitle">Sincronize sua lista IPTV com a TV</p>
+
+    <form id="sync-form">
+      <div class="form-group">
+        <label for="mac-input">Endereço MAC da TV</label>
+        <input type="text" id="mac-input" placeholder="Ex: 00:11:22:33:44:55" required>
+      </div>
+
+      <div class="form-group">
+        <label for="url-input">URL da Lista M3U</label>
+        <input type="url" id="url-input" placeholder="http://sua-lista.com/playlist.m3u" required>
+      </div>
+
+      <button type="submit" id="submit-btn">Sincronizar Lista</button>
+      <div id="status-message"></div>
+    </form>
+  </div>
+
+  <!-- Firebase v10 Modular SDK -->
+  <script type="module">
+    // 1. Importando funções do Firebase
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
+    import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js";
+
+    // 2. SUBSTITUA ESTAS CHAVES pelas do seu projeto no Firebase
+    const firebaseConfig = {
+      apiKey: "SUA_API_KEY",
+      authDomain: "SEU_PROJETO.firebaseapp.com",
+      databaseURL: "https://SEU_PROJETO-default-rtdb.firebaseio.com",
+      projectId: "SEU_PROJETO",
+      storageBucket: "SEU_PROJETO.appspot.com",
+      messagingSenderId: "SEU_SENDER_ID",
+      appId: "SEU_APP_ID"
+    };
+
+    // 3. Inicializa o Firebase e o Banco de Dados
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // 4. Lógica do Formulário
+    const form = document.getElementById('sync-form');
+    const statusMsg = document.getElementById('status-message');
+    const submitBtn = document.getElementById('submit-btn');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const macAddress = document.getElementById('mac-input').value.trim().toUpperCase();
+      const m3uUrl = document.getElementById('url-input').value.trim();
+
+      // Formatar o MAC para ser uma chave válida no Firebase (Firebase não aceita . # $ [ ])
+      // Substituímos os dois pontos por hifens. Ex: 00:11:22 vira 00-11-22
+      const safeMac = macAddress.replace(/:/g, '-');
+
+      submitBtn.textContent = "Sincronizando...";
+      submitBtn.disabled = true;
+      statusMsg.textContent = "";
+      statusMsg.className = "";
+
+      try {
+        // Salva os dados no caminho: devices/{MAC_DA_TV}
+        await set(ref(db, 'devices/' + safeMac), {
+          url: m3uUrl,
+          updatedAt: new Date().toISOString()
+        });
+        
+        statusMsg.textContent = "Lista sincronizada com sucesso! Abra o app na TV.";
+        statusMsg.className = "success";
+        form.reset();
+      } catch (error) {
+        statusMsg.textContent = "Erro ao sincronizar: " + error.message;
+        statusMsg.className = "error";
+      } finally {
+        submitBtn.textContent = "Sincronizar Lista";
+        submitBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
