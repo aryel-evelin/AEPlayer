@@ -9,7 +9,7 @@
     
     body {
       font-family: "Helvetica Neue", Arial, sans-serif;
-      background: #08090d;
+      background: #050505; /* Fundo super escuro baseado na logo */
       color: #f8fafc;
       display: flex;
       align-items: center;
@@ -19,81 +19,106 @@
     }
 
     .container {
-      background: #121520;
-      border: 2px solid #24293e;
-      border-radius: 16px;
+      background: #0a0a0a;
+      border: 1px solid #330000;
+      border-radius: 20px;
       padding: 40px;
       width: 100%;
       max-width: 500px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      box-shadow: 0 0 40px rgba(255, 0, 0, 0.15); /* Brilho vermelho sutil ao redor do card */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .logo-container {
+      margin-bottom: 20px;
+    }
+
+    .logo-container img {
+      width: 120px;
+      height: 120px;
+      border-radius: 24px;
+      box-shadow: 0 0 20px rgba(255, 0, 0, 0.4); /* Brilho neon da logo */
+      object-fit: cover;
     }
 
     h1 {
       text-align: center;
       font-size: 32px;
       margin-bottom: 8px;
-      background: linear-gradient(135deg, #9d4edd 0%, #ec4899 100%);
+      background: linear-gradient(135deg, #ff3333 0%, #990000 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       font-weight: 800;
+      letter-spacing: 1px;
     }
 
     p.subtitle {
       text-align: center;
-      color: #94a3b8;
+      color: #888;
       margin-bottom: 32px;
       font-size: 16px;
     }
 
+    #sync-form {
+      width: 100%;
+    }
+
     .form-group {
       margin-bottom: 24px;
+      width: 100%;
     }
 
     label {
       display: block;
       margin-bottom: 8px;
       font-size: 14px;
-      color: #cbd5e1;
+      color: #ccc;
       font-weight: 600;
     }
 
     input {
       width: 100%;
       padding: 14px 16px;
-      background: #08090d;
-      border: 2px solid #24293e;
+      background: #000;
+      border: 1px solid #330000;
       border-radius: 10px;
       color: #fff;
       font-size: 16px;
       outline: none;
-      transition: all 0.2s ease;
+      transition: all 0.3s ease;
     }
 
     input:focus {
-      border-color: #ec4899;
-      box-shadow: 0 0 10px rgba(236, 72, 153, 0.2);
+      border-color: #ff0000;
+      box-shadow: 0 0 12px rgba(255, 0, 0, 0.4); /* Foco vermelho neon */
     }
 
     button {
       width: 100%;
       padding: 16px;
-      background: linear-gradient(135deg, #7c3aed 0%, #ec4899 100%);
+      background: linear-gradient(135deg, #cc0000 0%, #660000 100%);
       color: #fff;
-      border: none;
+      border: 1px solid #ff0000;
       border-radius: 10px;
       font-size: 18px;
       font-weight: 700;
       cursor: pointer;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 1px;
     }
 
     button:hover {
       transform: translateY(-2px);
-      box-shadow: 0 8px 16px rgba(236, 72, 153, 0.4);
+      box-shadow: 0 0 20px rgba(255, 0, 0, 0.6);
+      background: linear-gradient(135deg, #ff0000 0%, #990000 100%);
     }
 
     button:active {
       transform: translateY(0);
+      box-shadow: 0 0 10px rgba(255, 0, 0, 0.4);
     }
 
     #status-message {
@@ -105,12 +130,15 @@
     }
     
     .success { color: #10b981; }
-    .error { color: #f43f5e; }
+    .error { color: #ff3333; }
   </style>
 </head>
 <body>
 
   <div class="container">
+    <div class="logo-container">
+      <img src="icon_large.png" alt="AE Player Logo">
+    </div>
     <h1>AE Player</h1>
     <p class="subtitle">Sincronize sua lista IPTV com a TV</p>
 
@@ -125,7 +153,7 @@
         <input type="url" id="url-input" placeholder="http://sua-lista.com/playlist.m3u" required>
       </div>
 
-      <button type="submit" id="submit-btn">Sincronizar Lista</button>
+      <button type="submit" id="submit-btn">Sincronizar</button>
       <div id="status-message"></div>
     </form>
   </div>
@@ -135,7 +163,6 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
     import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js";
 
-    // Suas credenciais do Firebase geradas + databaseURL adicionado
     const firebaseConfig = {
       apiKey: "AIzaSyCEqGS3OIB0mgN5_6fo9DSqziffAke4fOE",
       authDomain: "aeplayer.firebaseapp.com",
@@ -147,7 +174,6 @@
       measurementId: "G-7WZRF54F4P"
     };
 
-    // Inicializa o Firebase e o Banco de Dados
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
@@ -161,7 +187,6 @@
       const macAddress = document.getElementById('mac-input').value.trim().toUpperCase();
       const m3uUrl = document.getElementById('url-input').value.trim();
 
-      // Troca os dois pontos por hifens para salvar corretamente no Firebase
       const safeMac = macAddress.replace(/:/g, '-');
 
       submitBtn.textContent = "Sincronizando...";
@@ -182,7 +207,7 @@
         statusMsg.textContent = "Erro ao sincronizar: " + error.message;
         statusMsg.className = "error";
       } finally {
-        submitBtn.textContent = "Sincronizar Lista";
+        submitBtn.textContent = "Sincronizar";
         submitBtn.disabled = false;
       }
     });
