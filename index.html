@@ -130,28 +130,27 @@
     </form>
   </div>
 
-  <!-- Firebase v10 Modular SDK -->
+  <!-- Firebase v10 Modular SDK via CDN -->
   <script type="module">
-    // 1. Importando funções do Firebase
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
     import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js";
 
-    // 2. SUBSTITUA ESTAS CHAVES pelas do seu projeto no Firebase
+    // Suas credenciais do Firebase geradas + databaseURL adicionado
     const firebaseConfig = {
-      apiKey: "SUA_API_KEY",
-      authDomain: "SEU_PROJETO.firebaseapp.com",
-      databaseURL: "https://SEU_PROJETO-default-rtdb.firebaseio.com",
-      projectId: "SEU_PROJETO",
-      storageBucket: "SEU_PROJETO.appspot.com",
-      messagingSenderId: "SEU_SENDER_ID",
-      appId: "SEU_APP_ID"
+      apiKey: "AIzaSyCEqGS3OIB0mgN5_6fo9DSqziffAke4fOE",
+      authDomain: "aeplayer.firebaseapp.com",
+      databaseURL: "https://aeplayer-default-rtdb.firebaseio.com",
+      projectId: "aeplayer",
+      storageBucket: "aeplayer.firebasestorage.app",
+      messagingSenderId: "817829625225",
+      appId: "1:817829625225:web:18d7edbdf4ab9f2382b558",
+      measurementId: "G-7WZRF54F4P"
     };
 
-    // 3. Inicializa o Firebase e o Banco de Dados
+    // Inicializa o Firebase e o Banco de Dados
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // 4. Lógica do Formulário
     const form = document.getElementById('sync-form');
     const statusMsg = document.getElementById('status-message');
     const submitBtn = document.getElementById('submit-btn');
@@ -162,8 +161,7 @@
       const macAddress = document.getElementById('mac-input').value.trim().toUpperCase();
       const m3uUrl = document.getElementById('url-input').value.trim();
 
-      // Formatar o MAC para ser uma chave válida no Firebase (Firebase não aceita . # $ [ ])
-      // Substituímos os dois pontos por hifens. Ex: 00:11:22 vira 00-11-22
+      // Troca os dois pontos por hifens para salvar corretamente no Firebase
       const safeMac = macAddress.replace(/:/g, '-');
 
       submitBtn.textContent = "Sincronizando...";
@@ -172,7 +170,6 @@
       statusMsg.className = "";
 
       try {
-        // Salva os dados no caminho: devices/{MAC_DA_TV}
         await set(ref(db, 'devices/' + safeMac), {
           url: m3uUrl,
           updatedAt: new Date().toISOString()
